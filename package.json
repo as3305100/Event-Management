@@ -1,0 +1,23 @@
+{
+  "name": "event-management",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "prisma",
+    "express"
+  ],
+  "author": "Anurag Sahu",
+  "license": "ISC",
+  "description": "This project is about event management",
+  "dependencies": {
+    "@prisma/client": "^6.11.1",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "prisma": "^6.11.1"
+  }
+}
