@@ -1,6 +1,9 @@
 import Joi from "joi";
 import { eventField, userField } from "../utils/validationField.js";
 
+// In this file we making the validation schema and used in event.route.js file
+
+
 const createEventSchema = Joi.object({
   title: eventField.title,
   datetime: eventField.datetime,

@@ -1,5 +1,7 @@
 import Joi from "joi";
 
+// we make these field separate because it helps to not write the same field again and again
+// I know this not very useful for this project but big application it's good
 export const eventField = {
   title: Joi.string().trim().min(3).required().messages({
     "any.required": "Title is required",

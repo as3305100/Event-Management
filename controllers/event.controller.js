@@ -3,8 +3,10 @@ import { ApiError, handleAsync } from "../middlewares/error.middleware.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 
 export const createEvent = handleAsync(async (req, res) => {
+  // we applied validation throught middleware and this is validated data means it is trimmed
   const { title, datetime, location, capacity } = req.validated;
 
+  // creating the event 
   const event = await prisma.event.create({
     data: {
       title,
@@ -14,6 +16,7 @@ export const createEvent = handleAsync(async (req, res) => {
     },
   });
 
+  //  returning the response
   return new ApiResponse(201, "Event created successfully", {
     eventId: event.id,
   }).send(res);
@@ -22,6 +25,7 @@ export const createEvent = handleAsync(async (req, res) => {
 export const getEventDetails = handleAsync(async (req, res) => {
   const eventId = req.params.id;
 
+  // first we validating the eventId and if it is wrong it save's a database call
   const isValidUUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       eventId
@@ -29,6 +33,8 @@ export const getEventDetails = handleAsync(async (req, res) => {
   if (!isValidUUID) {
     throw new ApiError(400, "Invalid event ID format");
   }
+
+  // now we finding the event
 
   const event = await prisma.event.findUnique({
     where: {
@@ -43,10 +49,13 @@ export const getEventDetails = handleAsync(async (req, res) => {
     },
   });
 
+  // if event is not found, then through the error
+
   if (!event) {
     throw new ApiError(404, "No event found with this event ID");
   }
 
+  // this is for sending the clear response
   const registeredUsers = event.registrations.map((register) => register.user);
 
   const responseData = {
@@ -68,8 +77,11 @@ export const getEventDetails = handleAsync(async (req, res) => {
 export const registerForEvent = handleAsync(async (req, res) => {
   const eventId = req.params.id;
 
+  // we are taking these two value because if the user is not existed the database, 
+  // then we create the user, in this assingment user controller is not completed, because this is not mentioned in the assignment, we don't have a lot of time
   const { name, email } = req.validated;
 
+  // validating eventId to save database call
   const isValidUUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       eventId
@@ -78,6 +90,7 @@ export const registerForEvent = handleAsync(async (req, res) => {
     throw new ApiError(400, "Invalid event ID format");
   }
 
+  // finding the event 
   const event = await prisma.event.findUnique({
     where: {
       id: eventId,
@@ -87,27 +100,31 @@ export const registerForEvent = handleAsync(async (req, res) => {
   if (!event) {
     throw new ApiError(404, "Event not found");
   }
-
+  //  checking we the event was over
   if (Date.now() > new Date(event.datetime).getTime()) {
     throw new ApiError(400, "Cannot register for past event");
   }
-
+  // finding total reginstration for this event
   const totalRegisteredUser = await prisma.registration.count({
     where: { eventId },
   });
 
+  // checking if the capacity is full
   if (totalRegisteredUser >= event.capacity) {
     throw new ApiError(400, "Event is full");
   }
 
+  // checking if user is existed or not with this email
   let user = await prisma.user.findUnique({ where: { email } });
 
+  // if not then create it
   if (!user) {
     user = await prisma.user.create({
       data: { name, email },
     });
   }
 
+  // checking if the user already register for that event
   const userAlreadyRegistered = await prisma.registration.findUnique({
     where: {
       userId_eventId: {
@@ -121,6 +138,7 @@ export const registerForEvent = handleAsync(async (req, res) => {
     throw new ApiError(400, "User already registered for this event");
   }
 
+  // now creating the user registration for this event
   const registration = await prisma.registration.create({
     data: {
       userId: user.id,
